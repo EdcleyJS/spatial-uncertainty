@@ -8,6 +8,9 @@ mapVis04.scrollWheelZoom.disable();
 var bounds = [[0,0], [1000,1000]];
 //-----------------------------------------------------------------------------
 var distance_far_geodata;
+var parameters = location.search.substring(1).split("&");
+console.log(parameters);
+console.log('testing');
 d3.json("./data/polygons.geojson",function(error,polygons_far){
   distance_far_geodata=polygons_far;
 });

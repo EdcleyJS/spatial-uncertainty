@@ -11,12 +11,28 @@ var d_distance_near=[],d1_distance_near=[],d2_distance_near=[],d3_distance_near=
 var ndist_distance_near;
 //-----------------------------------------------------------------------------
 var distance_near_geodata;
-d3.json("./data/polygons.geojson",function(error,polygons_far){
+
+var url_string = window.location.href
+var url = new URL(url_string);
+var polyfile = url.searchParams.get("polygon");
+var distributionfile = url.searchParams.get("distribution");
+
+if(!polyfile) {
+  polyfile = "./data/polygons.geojson";
+}
+
+if(!distributionfile) {
+  distributionfile = "./data/distribuicao.json";
+}
+
+console.log(polyfile,distributionfile);
+
+d3.json(polyfile,function(error,polygons_far){
   distance_near_geodata=polygons_far;
 });
 //--------------------------------------------------------------
 var dist_distance;
-d3.json("./data/distribuicao.json",function(error,distribuicao){
+d3.json(distributionfile,function(error,distribuicao){
   dist_distance=distribuicao;
   dist_distance= Object.keys(dist_distance).map(function(key) {
     return [dist_distance[key]];
