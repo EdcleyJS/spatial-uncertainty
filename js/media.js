@@ -6,6 +6,7 @@ var Layerprob_gerada,GeoLayer2,GeoLayer3,amostraN;
 mapVis04.doubleClickZoom.disable();
 mapVis04.scrollWheelZoom.disable();
 var bounds = [[0,0], [1000,1000]];
+var colorScale = undefined;
 //-----------------------------------------------------------------------------
 var distance_far_geodata;
 
@@ -13,6 +14,8 @@ var url_string = window.location.href
 var url = new URL(url_string);
 var polyfile = url.searchParams.get("polygon");
 var distributionfile = url.searchParams.get("distribution");
+var infoVis04;
+var legendVis04;
 
 if(!polyfile) {
   polyfile = "./data/polygons.geojson";
@@ -30,27 +33,51 @@ d3.json(polyfile,function(error,polygons_far){
 //--------------------------------------------------------------
 var dist_distance;
 d3.json(distributionfile,function(error,distribuicao){
-  dist_distance=distribuicao;
-  dist_distance= Object.keys(dist_distance).map(function(key) {
-    return [dist_distance[key]];
-  });
+
+    //
+    menor = Infinity
+    maior = -Infinity
+
+    for(let key in distribuicao){
+	let values = distribuicao[key];
+	for(key2 in values){
+	    let value = values[key2];
+	    if(value < menor) menor = value;
+	    if(value > maior) maior = value;
+	}
+    }
+
+    //
+    colorScale = d3.scaleQuantize().domain([menor,maior]).range(['#f7fcfd','#e5f5f9','#ccece6','#99d8c9','#66c2a4','#41ae76','#238b45','#006d2c','#00441b']);
+    grades_distance = colorScale.ticks();
+
+    addLegend();
+    
+    //
+    dist_distance=distribuicao;
+    dist_distance= Object.keys(dist_distance).map(function(key) {
+	return [dist_distance[key]];
+    });
 });
 //-------------------------------------------------------------
-var infoVis04 = L.control();
-infoVis04.onAdd = function (mymap) {
-  this._div = L.DomUtil.create('div', 'info');
-  this.update();
-  return this._div;
-};
-var legendVis04 = L.control({position: 'bottomright'});
-legendVis04.onAdd = function (mapprob_gerada) {
-  var div = L.DomUtil.create('div', 'info legend');
-  for (var i = (grades_distance.length-1); i >=0 ; i--) {
-    div.innerHTML +='<i style="color:#'+color_distance(grades_distance[i])+'; background:#'+color_distance(grades_distance[i])+'"></i>'+grades_distance[i]+'</br>';
-  }
-  return div;
-};
-legendVis04.addTo(mapVis04);
+function addLegend(){
+    infoVis04 = L.control();
+    infoVis04.onAdd = function (mymap) {
+	this._div = L.DomUtil.create('div', 'info');
+	this.update();
+	return this._div;
+    };
+    legendVis04 = L.control({position: 'bottomright'});
+    legendVis04.onAdd = function (mapprob_gerada) {
+	var div = L.DomUtil.create('div', 'info legend');
+	for (var i = (grades_distance.length-1); i >=0 ; i--) {
+	    div.innerHTML +='<i style="color:'+color_distance(grades_distance[i])+'; background:'+color_distance(grades_distance[i])+'"></i>'+grades_distance[i]+'</br>';
+	}
+	return div;
+    };
+    legendVis04.addTo(mapVis04);
+}
+
 function Vis04TutorialFunction(){
   var maximo=0;
   if(layerTuto4!= null){
@@ -70,7 +97,7 @@ function Vis04TutorialFunction(){
             return {
               weight: 3.5,
               opacity: 1,
-              fillColor: "#"+color_distance(prob_gerada),
+              fillColor: color_distance(prob_gerada),
               fillOpacity: 0.9,
               color: '#e66101'
             };
@@ -78,7 +105,7 @@ function Vis04TutorialFunction(){
             return {
               weight: 3.5,
               opacity: 1,
-              fillColor: "#"+color_distance(prob_gerada),
+              fillColor: color_distance(prob_gerada),
               fillOpacity: 0.9,
               color: '#d01c8b'
             };
@@ -87,7 +114,7 @@ function Vis04TutorialFunction(){
               return {
                 weight: 0.5,
                 opacity: 1,
-                fillColor: "#"+color_distance(prob_gerada),
+                fillColor: color_distance(prob_gerada),
                 color: 'black',
                 fillOpacity: 0.9
               };

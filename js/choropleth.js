@@ -8,6 +8,8 @@ mapVis02.scrollWheelZoom.disable();
 var bounds = [[0,0], [1000,1000]];
 var distance_near_geodata;
 
+var firstTime = true;
+
 var url_string = window.location.href
 var url = new URL(url_string);
 var polyfile = url.searchParams.get("polygon");
@@ -71,7 +73,7 @@ function Vis02TutorialFunction(){
     layerTuto2=L.geoJson(distance_near_geodata,
       {style: function(feature){
           //Style para definir configurações dos polígonos a serem desenhados e colorir com base na escala criada.
-        var probArea= new distribuicaoIntervalo(distribuicaoSin(feature.properties.id,dist_distance),left,right);
+          var probArea= new distribuicaoIntervalo(distribuicaoSin(feature.properties.id,dist_distance),left,right);
         var prob= probArea.cdfintervalo().toFixed(2);
       if(feature.properties.highlight==1){
           if(feature.properties.id==0){
@@ -132,11 +134,17 @@ function Vis02TutorialFunction(){
   infoVis02.update = function (props) {
       this._div.innerHTML= infoprops(props);
   };
-  infoVis02.addTo(mapVis02);
+
+    infoVis02.addTo(mapVis02);
+
+    //
   console.log("ok");
 }
 
 setTimeout(function() {  
    Vis02TutorialFunction();
-   bring_front(mapVis02);
+    bring_front(mapVis02);
+    buildSlider();
+    Vis02TutorialFunction();
 }, 1000);
+

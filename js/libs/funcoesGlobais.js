@@ -35,14 +35,19 @@ function distribuicaoSin(id,disttomap){
 }
 
 function color_distance(prob){
-  var cbf = palette('cb-BuGn', 9);
-  var color;
-  grades_distance.forEach(function(d,i){
-    if(Number(prob)>=d){
-      color=cbf[i];
+    if(colorScale == undefined){
+	var cbf = palette('cb-BuGn', 9);
+	var color;
+	grades_distance.forEach(function(d,i){
+	    if(Number(prob)>=d){
+		color=cbf[i];
+	    }
+	});
+	return color;
     }
-  });
-  return color;
+    else{
+	return colorScale(prob);
+    }
 }
 
 // PREPARA A DISTRUIBUICAO DE CADA ÁREA EM DIAS 365 PARA CADA ANO NO DATASET.
@@ -572,14 +577,15 @@ function colorD(media){
   return color;
 }
 function colorR(prob){
-  var cbf = palette('cb-BuGn', 9);
-  var color;
-  gradesR.forEach(function(d,i){
-    if(Number(prob)>=d){
-      color=cbf[i];
-    }
-  });
-  return color;
+    var cbf = palette('cb-BuGn', 9);
+    var color;
+    gradesR.forEach(function(d,i){
+	if(Number(prob)>=d){
+	    color=cbf[i];
+	}
+    });
+    return color;
+
 }
 //ESCALA DE CORES PARA PROBABILIDADE
 function colorN(d){

@@ -1,6 +1,9 @@
 var novaDist,bounds,width,height,area,nump,cont,cor,p,markerCircle,opcoes=[],anoSelecionado,featurename,mesSelecionado,anoSelecionado,diaSelecionado,trimestreSelecionado,layerTuto3;
-var mapVis03 = L.map('vis03',{preferCanvas: true,attributionControl: false,crs: L.CRS.Simple}).setView([0.203125,0.6640625], 6);
+var mapVis03 = L.map('vis03',{preferCanvas: true,backgroun:'blue',attributionControl: false,crs: L.CRS.Simple}).setView([0.203125,0.6640625], 6);
 var grades_distance=[91,170,249,328,407,486,565,644,727];
+var colorScale = undefined;
+
+
 var myRendererTaxi = L.canvas({ padding: 0.5 });
 var LayerDotMap,LayerTaxi,pontos;
 var database,dots=[],dotsZ1=[],dotsZ2=[],dotsZ3=[],dotsTaxi=[],dotsZ1Taxi=[],dotsZ2Taxi=[],dotsZ3Taxi=[];
@@ -16,6 +19,11 @@ var url_string = window.location.href
 var url = new URL(url_string);
 var polyfile = url.searchParams.get("polygon");
 var distributionfile = url.searchParams.get("distribution");
+
+var infoVis03;
+var legendVis03;
+    
+
 
 if(!polyfile) {
   polyfile = "./data/polygons.geojson";
@@ -33,11 +41,32 @@ d3.json(polyfile,function(error,polygons_far){
 //--------------------------------------------------------------
 var dist_distance;
 d3.json(distributionfile,function(error,distribuicao){
-  dist_distance=distribuicao;
-  dist_distance= Object.keys(dist_distance).map(function(key) {
-    return [dist_distance[key]];
-  });
+
+    //
+    menor = Infinity
+    maior = -Infinity
+
+    for(let key in distribuicao){
+	let values = distribuicao[key];
+	for(key2 in values){
+	    let value = values[key2];
+	    if(value < menor) menor = value;
+	    if(value > maior) maior = value;
+	}
+    }
+    
+    //
+    colorScale = d3.scaleQuantize().domain([menor,maior]).range(['#f7fcfd','#e5f5f9','#ccece6','#99d8c9','#66c2a4','#41ae76','#238b45','#006d2c','#00441b']);
+    grades_distance = colorScale.ticks();
+
+    //
+    dist_distance=distribuicao;
+    dist_distance= Object.keys(dist_distance).map(function(key) {
+	return [dist_distance[key]];
+    });
 });
+
+
 //-----------------------------------------------------------------------------
 function pontos_distance_near(){
   var pointsdots = [];
@@ -46,6 +75,8 @@ function pontos_distance_near(){
   L.geoJson(distance_near_geodata,{
     onEachFeature: async function (feature, layer) {
         await sleep(3000);
+	//var buffered = turf.transformScale(layer.toGeoJSON(), 0.85);
+	var buffered = turf.buffer(layer.toGeoJSON(), -5, {units: 'miles'})
         if(feature.properties.highlight==1 || feature.properties.highlight==0){
           //Pega a distribuição com valores
           ndist_distance_near= dotMapPrep(distribuicaoSin(feature.properties.id,dist_distance));
@@ -54,7 +85,7 @@ function pontos_distance_near(){
           //turf cria uma caixa de formato retangular em volta do poligono
           var a=turf.bbox(enveloped); 
           //um grid de pontos é gerado com distancia de 15 entre os pontos (unidade não especificada mas pode ser km ou ml).
-          var grid = turf.pointGrid(a,15);
+          var grid = turf.pointGrid(a,12);
           // array que vai guardar os pontos que estão dentro dos limites do poligono.
           var pointsGrid=[];
           //para cada ponto no grid
@@ -67,7 +98,9 @@ function pontos_distance_near(){
               //passando o ponto criado, o layer convertido em objeto geoJson e true para sinalizar
               //que quero saber se o ponto pertence se fosse o contrario seria false.
               //se o length retorno for 1 é porque a condicação é satisfeita e ponto pertence
-              if (leafletPip.pointInLayer(q, L.geoJSON(layer.toGeoJSON()), true).length > 0) {
+	      
+              if (turf.inside(turf.point([q.lng,q.lat]),buffered)) {
+	      //if(leafletPip.pointInLayer(q, L.geoJSON(layer.toGeoJSON()), true).length > 0){
                 //entao eu salvo aquele ponto que esta dentro dos limites do poligono
                 pointsGrid.push(q);
               }
@@ -80,7 +113,7 @@ function pontos_distance_near(){
           //cada valor em um objeto L.circle marker
           ndist_distance_near.forEach(function(d){
             //a cor do ponto calculada com base no valor
-            cor= "#"+color_distance(d[0]);
+            cor= color_distance(d[0]);
             //o limite é a quantidade de pontos que um valor tera disponivel dentro do total de pontos do poligono para representar seu valor
             //quanto maior a ocorrencia do valor na distribuição mais pontos irao representalos.
             //na funcao que arrendonda os valores é retornado os valores e a representação deles em % d[1]
@@ -92,10 +125,10 @@ function pontos_distance_near(){
                   //são gerados 4 arrays de marcadores de pontos com raio diferente para que quando o zoom seja grande o ponto aumente
                   //algumas pessoas reclamaram nos pilotos que ao dar zoom ficava praticamente impossivel de ver os pontos então
                   //implementei essa solução
-                  d_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 1.6, weight: 1,fillColor: cor,fillOpacity:1, color: cor,renderer: myRendererTaxi}).bindPopup(""+d[0]));
-                  d1_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 3.2, weight: 1,fillColor: cor,fillOpacity:1, color: cor,renderer: myRendererTaxi}).bindPopup(""+d[0]));
-                  d2_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 6.4, weight: 1,fillColor: cor,fillOpacity:1, color: cor,renderer: myRendererTaxi}).bindPopup(""+d[0]));
-                  d3_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 9.6, weight: 1,fillColor: cor,fillOpacity:1, color: cor,renderer: myRendererTaxi}).bindPopup(""+d[0]));
+                    d_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 3.2, stroke:true, weight: 0.5,fillColor: cor,fillOpacity:1, color: 'gray',renderer: myRendererTaxi}).bindPopup(""+d[0]));
+                  d1_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 3.2, stroke:true, weight: 0.5,fillColor: cor,fillOpacity:1, color: 'gray',renderer: myRendererTaxi}).bindPopup(""+d[0]));
+                  d2_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 6.4, stroke:true, weight: 0.5,fillColor: cor,fillOpacity:1, color: 'gray',renderer: myRendererTaxi}).bindPopup(""+d[0]));
+                  d3_distance_near.push(L.circleMarker(pointsGrid[i], {radius: 9.6, stroke:true, weight: 0.5,fillColor: cor,fillOpacity:1, color: 'gray',renderer: myRendererTaxi}).bindPopup(""+d[0]));
                   pdisponiveis--;              
                 }
             }
@@ -111,21 +144,26 @@ function pontos_distance_near(){
 mapVis03.on('zoomend', function() {
   Vis03TutorialFunction();
 });
-var infoVis03=L.control();
-infoVis03.onAdd = function (mymap) {
-  this._div = L.DomUtil.create('div', 'info');
-  this.update();
-  return this._div;
-};
-var legendVis03 = L.control({position: 'bottomright'});
-legendVis03.onAdd = function (map) {
-  var div = L.DomUtil.create('div', 'info legend');
-  for (var i = (grades_distance.length-1); i >=0 ; i--) {
-    div.innerHTML +='<i style="color:#'+color_distance(grades_distance[i])+'; background:#'+color_distance(grades_distance[i])+'"></i>'+grades_distance[i]+'</br>';
-  }
-  return div;
-};
-legendVis03.addTo(mapVis03);
+
+function addLegend(){
+    infoVis03=L.control();
+    infoVis03.onAdd = function (mymap) {
+	this._div = L.DomUtil.create('div', 'info');
+	this.update();
+	return this._div;
+    };
+    legendVis03 = L.control({position: 'bottomright'});
+    legendVis03.onAdd = function (map) {
+	var div = L.DomUtil.create('div', 'info legend');
+	for (var i = (grades_distance.length-1); i >=0 ; i--) {
+	    div.innerHTML +='<i style="color:'+color_distance(grades_distance[i])+'; background:'+color_distance(grades_distance[i])+'"></i>'+grades_distance[i]+'</br>';
+	}
+	return div;
+    };
+    legendVis03.addTo(mapVis03);
+}
+
+
 function Vis03TutorialFunction(){
   if(layerTuto3!= null){
     layerTuto3.clearLayers();
@@ -180,20 +218,23 @@ function Vis03TutorialFunction(){
   }else{
     pontos = L.layerGroup(d_distance_near);
   }
-  pontos.addTo(mapVis03);
+    pontos.addTo(mapVis03);
+    //
   infoVis03.update = function (props) {
     this._div.innerHTML= infoprops(props);
   };
   infoVis03.addTo(mapVis03);
 }
+
 //--------------------------------------------------------------------------------------
 // é preciso gerar os pontos antes de chamar a func que desenha o mapa se não o mapa fica vazio sem pontos;
 // no teste com o usuário não tem esse problema pq enquanto ele esta passando pelos passos iniciais os pontos são carregados
 // aqui utilizei a abordagem a baixo. Quanto + pontos no mapa + tempo pra gerar + tempo antes de chamar a func que desenha os pontos.
 setTimeout(async function(){
-  pontos_distance_near();
+    pontos_distance_near();
+    addLegend();
   await sleep(3000);
-  Vis03TutorialFunction();
+    Vis03TutorialFunction();
   bring_front(mapVis03);
 }, 500);
 
