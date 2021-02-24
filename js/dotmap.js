@@ -26,11 +26,11 @@ var infoVis03;
 var legendVis03;
 
 if (!polyfile) {
-  polyfile = "./data/rio.geojson";//"./data/polygons.geojson";
+  polyfile = "./spatial_uncertainty/data/rio.geojson";//"./data/polygons.geojson";
 }
 
 if (!distributionfile) {
-  distributionfile = "./data/weather.json";//"./data/distribuicao.json";
+  distributionfile = "./spatial_uncertainty/data/weather.json";//"./data/distribuicao.json";
 }
 
 console.log(polyfile, distributionfile);
@@ -66,7 +66,7 @@ d3.json(distributionfile, function (error, distribuicao) {
     distance_near_geodata = polygons_far;
 
 
-    d3.json("./data/pointsGood.json", function (error, points) {
+    d3.json("./spatial_uncertainty/data/pointsGood.json", function (error, points) {
       mapFeaturePoints = points;
     
       //////
@@ -112,6 +112,9 @@ function createMarkers(){
         d2_distance_near.push(L.circleMarker(coords, { radius: 6.4, stroke: true, weight: 0.5, fillColor: cor, fillOpacity: 1, color: 'gray', renderer: myRendererTaxi }).bindPopup("" + value));
         d3_distance_near.push(L.circleMarker(coords, { radius: 9.6, stroke: true, weight: 0.5, fillColor: cor, fillOpacity: 1, color: 'gray', renderer: myRendererTaxi }).bindPopup("" + value));
       }
+    }
+    else if(true){
+
     }
     else{//sort
       let distribution = distribuicaoSin(feature.properties.id, dist_distance);
