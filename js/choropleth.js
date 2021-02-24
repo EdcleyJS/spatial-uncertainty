@@ -16,11 +16,11 @@ var polyfile = url.searchParams.get("polygon");
 var distributionfile = url.searchParams.get("distribution");
 
 if(!polyfile) {
-  polyfile = "./data/polygons.geojson";
+  polyfile = "./data/rio.geojson";//"./data/polygons.geojson";
 }
 
 if(!distributionfile) {
-  distributionfile = "./data/distribuicao.json";
+  distributionfile = "./data/weather.json";//"./data/distribuicao.json";
 }
 
 console.log(polyfile,distributionfile);
@@ -63,6 +63,19 @@ legendVis02.onAdd = function (map) {
 legendVis02.addTo(mapVis02);
 var cmpOn=false;
 var flag=false;
+
+function updateColorsTuto2(){
+  for(let iid in layerTuto2._layers){
+    layer = layerTuto2._layers[iid];
+    var probArea= new distribuicaoIntervalo(distribuicaoSin(layer.feature.properties.id,dist_distance),left,right);
+    var prob= probArea.cdfintervalo().toFixed(2);
+    layer.setStyle({
+      fillColor: "#"+colorR(prob)
+    });
+  }
+  
+}
+
 //-- FUNÇÃO QUE DESENHA E CONTROLA AS AREAS NO MAPA --
 var layerTuto2;
 
@@ -131,6 +144,9 @@ function Vis02TutorialFunction(){
         //}
       }
   }).addTo(mapVis02);
+
+  mapVis02.fitBounds(layerTuto2.getBounds());
+
   infoVis02.update = function (props) {
       this._div.innerHTML= infoprops(props);
   };

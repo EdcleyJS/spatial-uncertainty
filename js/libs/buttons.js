@@ -26,7 +26,7 @@ function buildSlider() {
         	//opcoes=['Recife','Caruaru'];
             left=data.from;
             right=data.to;
-            Vis02TutorialFunction();
+            updateColorsTuto2();
         }
 	});
 }
